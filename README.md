@@ -1,0 +1,1 @@
+# curs6_django_hws
