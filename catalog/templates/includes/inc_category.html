@@ -1,0 +1,8 @@
+<div class="col-6 col-md">
+    <h5>Категории</h5>
+    {% for category in category_list %}
+    <ul class="list-unstyled text-small">
+        <li><a class="text-muted" href="#">{{ category.name }}</a></li>
+    </ul>
+    {% endfor %}
+</div>
