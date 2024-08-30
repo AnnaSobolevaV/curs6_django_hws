@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
         data_json = self.load_data()
 
-        # Обходим все значения категорий из фиктсуры для получения информации об одном объекте
+        # Обходим все значения категорий из фикстуры для получения информации об одном объекте
         for category in Command.json_read_categories(data_json):
             category_for_create.append(
                 Category(id=category["pk"], name=category["fields"]["name"],
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         # Создаем объекты в базе с помощью метода bulk_create()
         Category.objects.bulk_create(category_for_create)
 
-        # Обходим все значения продуктов из фиктсуры для получения информации об одном объекте
+        # Обходим все значения продуктов из фикстуры для получения информации об одном объекте
         for product in Command.json_read_products(data_json):
             if product["fields"]["category"]:
                 category_product = Category.objects.get(pk=product["fields"]["category"])

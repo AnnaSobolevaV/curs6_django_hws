@@ -1,0 +1,36 @@
+{% extends 'catalog/base.html' %}
+{% if object.preview %}
+{% load my_tags %}
+{% endif %}
+
+
+{% block content %}
+
+<div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+    <h1 class="display-4">НЕ ОЗОН</h1>
+    <p class="lead">Наши публикации</p>
+</div>
+
+<div class="row text-center">
+    <div class="col-12">
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">{{object.header }}</h4>
+                <br>
+                <a class="btn btn-primary" href="{% url 'catalog:blogrecord_update' object.pk %}" role="button">Редактировать</a>
+                <a class="btn btn-primary" href="{% url 'catalog:blogrecord_delete' object.pk %}" role="button">Удалить</a>
+                <a class="btn btn-primary" href="{% url 'catalog:blogrecord_list' %}" role="button">Вернуться в блог</a>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">{{ object.count }}</h1>
+                <ul class="list-unstyled mt-3 mb-4 text-start m-3">
+                    <li>{{ object.content }}</li>
+                </ul>
+            </div>
+            {% if object.preview %}
+                <img src="{{ object.preview | media_filter }}">
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
