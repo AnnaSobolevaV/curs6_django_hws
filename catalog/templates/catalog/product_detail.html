@@ -1,0 +1,39 @@
+{% extends 'catalog/base.html' %}
+{% load my_tags %}
+{% block content %}
+
+<div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+    <h1 class="display-4">НЕ ОЗОН</h1>
+    <p class="lead">НЕ ОЗОН - это отличный вариант не покупать кучу барахла</p>
+</div>
+
+<div class="row text-center">
+    <div class="col-12">
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                {% if object.category %}
+                    <h4 class="my-0 font-weight-normal">
+                        {{ object.category }} / {{object.name }}</h4>
+                {% else %}
+                    <h4 class="my-0 font-weight-normal">
+                        Без категории / {{object.name }}</h4>
+                {% endif %}
+                <br>
+                <a class="btn btn-primary" href="{% url 'catalog:product_update' object.pk %}" role="button">
+                    Редактировать</a>
+                <a class="btn btn-primary" href="{% url 'catalog:product_delete' object.pk %}" role="button">
+                    Удалить</a>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">{{ object.price | floatformat:2 }} руб.</h1>
+                <ul class="list-unstyled mt-3 mb-4 text-start m-3">
+                    <li>{{ object.description }}</li>
+                </ul>
+                <button type="button" class="btn btn-lg btn-block btn-outline-primary">
+                    Купить</button>
+            </div>
+            <img src="{{ object.image | media_filter }}">
+        </div>
+    </div>
+</div>
+{% endblock %}
