@@ -11,13 +11,18 @@
     <div class="col-12">
         <div class="card mb-4 box-shadow">
             <div class="card-header">
-                {% if object.category %}
-                    <h4 class="my-0 font-weight-normal">
-                        {{ object.category }} / {{object.name }}</h4>
-                {% else %}
-                    <h4 class="my-0 font-weight-normal">
-                        Без категории / {{object.name }}</h4>
-                {% endif %}
+                <h4 class="my-0 font-weight-normal">
+                    {% if object.category %}
+                        {{ object.category }}
+                    {% else %}
+                        Без категории
+                    {% endif %}
+                    / {{object.name }}
+                    {% if object.is_current_vers %}
+                        / версия: {{object.is_current_vers}}
+                    {% endif %}
+
+                </h4>
                 <br>
                 <a class="btn btn-primary" href="{% url 'catalog:product_update' object.pk %}" role="button">
                     Редактировать</a>

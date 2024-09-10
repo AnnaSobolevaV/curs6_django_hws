@@ -23,7 +23,11 @@
                     <div class="card-header">
                         <h4 class="my-0 font-weight-normal">
                             <a class="text-muted" href="/product/{{object.pk}}">
-                                {{ object.name }}</a>
+                                {{ object.name }}
+                                {% if object.is_current_vers %}
+                                    / версия: {{object.is_current_vers}}
+                                {% endif %}
+                            </a>
                         </h4>
                     </div>
                     <div class="card-body">
