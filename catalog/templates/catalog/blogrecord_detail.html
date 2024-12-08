@@ -17,8 +17,11 @@
             <div class="card-header">
                 <h4 class="my-0 font-weight-normal">{{object.header }}</h4>
                 <br>
+                {% if user.is_authenticated and user == object.owner %}
                 <a class="btn btn-primary" href="{% url 'catalog:blogrecord_update' object.pk %}" role="button">Редактировать</a>
-                <a class="btn btn-primary" href="{% url 'catalog:blogrecord_delete' object.pk %}" role="button">Удалить</a>
+                <a class="btn btn-primary" href="{% url 'catalog:blogrecord_delete' object.pk %}"
+                   role="button">Удалить</a>
+                {% endif %}
                 <a class="btn btn-primary" href="{% url 'catalog:blogrecord_list' %}" role="button">Вернуться в блог</a>
             </div>
             <div class="card-body">
@@ -28,7 +31,7 @@
                 </ul>
             </div>
             {% if object.preview %}
-                <img src="{{ object.preview | media_filter }}">
+            <img src="{{ object.preview | media_filter }}">
             {% endif %}
         </div>
     </div>
