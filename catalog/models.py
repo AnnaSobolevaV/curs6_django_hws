@@ -1,5 +1,7 @@
 from django.db import models
 
+from users.models import User
+
 
 class Contacts(models.Model):
     name = models.CharField(
@@ -77,6 +79,14 @@ class BlogRecord(models.Model):
         verbose_name="Количество просмотров",
         help_text=""
     )
+    owner = models.ForeignKey(
+        User,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Владелец",
+        help_text="Владелец записи",
+    )
 
     class Meta:
         verbose_name = "Запись"
@@ -151,6 +161,14 @@ class Product(models.Model):
         null=True,
         verbose_name="Дата последнего изменения",
         help_text="Дата последнего изменения",
+    )
+    owner = models.ForeignKey(
+        User,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Владелец",
+        help_text="Владелец продукта",
     )
 
     class Meta:

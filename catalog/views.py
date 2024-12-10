@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import inlineformset_factory
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
@@ -70,7 +71,7 @@ class ProductDetailView(DetailView):
         return context_data
 
 
-class ProductCreateView(CreateView):
+class ProductCreateView(CreateView, LoginRequiredMixin):
     model = Product
     form_class = ProductForm
     success_url = reverse_lazy('catalog:product_list')
@@ -93,6 +94,8 @@ class ProductCreateView(CreateView):
         formset = context_data['formset']
         if form.is_valid() and formset.is_valid():
             self.object = form.save()
+            user = self.request.user
+            self.object.owner = user
             formset.instance = self.object
             formset.save()
             return super().form_valid(form)
@@ -154,7 +157,9 @@ class BlogRecordListView(ListView):
 
     def get_queryset(self, *args, **kwargs):
         queryset = super().get_queryset(*args, **kwargs)
-        queryset = queryset.filter(is_published=True)
+        user = self.request.user
+        if not user.is_authenticated:
+            queryset = queryset.filter(is_published=True)
         return queryset
 
 
@@ -188,6 +193,8 @@ class BlogRecordCreateView(CreateView):
     def form_valid(self, form):
         if form.is_valid():
             new_rec = form.save()
+            user = self.request.user
+            new_rec.owner = user
             new_rec.slug = slugify(unidecode(new_rec.header + ' ' + str(new_rec.pk)))
             new_rec.created_at = datetime.date.today()
             new_rec.save()

@@ -17,7 +17,7 @@ class StyleFormMixin:
 class ProductForm(StyleFormMixin, ModelForm):
     class Meta:
         model = Product
-        exclude = ("created_at", "updated_at",)
+        exclude = ("created_at", "updated_at", "owner")
 
     def clean_name(self):
         wrong_list = ('казино', 'криптовалюта', 'крипта', 'биржа', 'дешево', 'бесплатно',
@@ -25,7 +25,7 @@ class ProductForm(StyleFormMixin, ModelForm):
         cleaned_data = self.cleaned_data['name']
         for wrong_str in wrong_list:
             if wrong_str in cleaned_data:
-                raise forms.ValidationError('не стоит использовать это слово в названии')
+                raise forms.ValidationError(f'не стоит использовать слово {wrong_str} в названии ')
 
         return cleaned_data
 
@@ -41,7 +41,6 @@ class ProductForm(StyleFormMixin, ModelForm):
 
 
 class VersionProductForm(StyleFormMixin, ModelForm):
-
     class Meta:
         model = Version
         fields = '__all__'

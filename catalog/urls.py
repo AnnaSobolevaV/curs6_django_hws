@@ -4,6 +4,7 @@ from catalog.views import ProductListView, ProductDetailView, CategoryDetailView
 from catalog.views import ProductCreateView, ProductUpdateView, ProductDeleteView
 from catalog.views import BlogRecordListView, BlogRecordDetailView, BlogRecordCreateView
 from catalog.views import BlogRecordDeleteView, BlogRecordUpdateView, ContactsCreateView
+
 app_name = CatalogConfig.name
 
 urlpatterns = [
