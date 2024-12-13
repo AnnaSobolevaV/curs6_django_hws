@@ -170,6 +170,12 @@ class Product(models.Model):
         verbose_name="Владелец",
         help_text="Владелец продукта",
     )
+    is_published = models.BooleanField(
+        blank=True,
+        null=True,
+        verbose_name="Опубликовано",
+        help_text=""
+    )
 
     class Meta:
         verbose_name = "Продукт"
@@ -179,6 +185,7 @@ class Product(models.Model):
             "category",
             "price",
         )
+        permissions = [('can_unpublish_product', 'can unpublish product'), ]
 
     def __str__(self):
         return self.name

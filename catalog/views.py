@@ -2,7 +2,8 @@ import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import inlineformset_factory
-from django.shortcuts import render
+from django.http import HttpResponseForbidden
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -45,6 +46,26 @@ class CategoryDetailView(DetailView):
         return context
 
 
+def product_unpublish(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.user.has_perm('catalog.can_unpublish_product') or product.owner == request.user:
+        product.is_published = False
+        product.save()
+    else:
+        return HttpResponseForbidden("У вас нет прав отменять публикацию продуктов")
+    return redirect('catalog:product', pk=pk)
+
+
+def product_publish(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.user.has_perm('catalog.can_unpublish_product') or product.owner == request.user:
+        product.is_published = True
+        product.save()
+    else:
+        return HttpResponseForbidden("У вас нет прав публиковать продукты")
+    return redirect('catalog:product', pk=pk)
+
+
 class ProductListView(ListView):
     model = Product
 
@@ -56,6 +77,15 @@ class ProductListView(ListView):
         category_list = Category.objects.all()
         context_data['category_list'] = category_list
         return context_data
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
+        user = self.request.user
+        if not user.is_authenticated:
+            queryset = queryset.filter(is_published=True)
+        elif not user.has_perm('catalog.can_unpublish_product'):
+            queryset = queryset.filter(is_published=True) | queryset.filter(owner=user)
+        return queryset
 
 
 class ProductDetailView(DetailView):
@@ -103,10 +133,16 @@ class ProductCreateView(CreateView, LoginRequiredMixin):
             return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(UpdateView, LoginRequiredMixin):
     model = Product
     form_class = ProductForm
     success_url = reverse_lazy('catalog:product_list')
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not (request.user.has_perm('catalog.update_product') or self.object.owner == request.user):
+            return HttpResponseForbidden("У вас нет прав редактировать чужие продукты")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -123,9 +159,7 @@ class ProductUpdateView(UpdateView):
 
     def form_valid(self, form):
         context_data = self.get_context_data()
-
         formset = context_data['formset']
-        print(formset)
         if form.is_valid() and formset.is_valid():
             self.object = form.save()
             formset.instance = self.object
@@ -135,9 +169,15 @@ class ProductUpdateView(UpdateView):
             return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
-class ProductDeleteView(DeleteView):
+class ProductDeleteView(DeleteView, LoginRequiredMixin):
     model = Product
     success_url = reverse_lazy('catalog:product_list')
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not (request.user.has_perm('catalog.delete_product') or self.object.owner == request.user):
+            return HttpResponseForbidden("У вас нет прав удалять чужие продукты")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -179,7 +219,7 @@ class BlogRecordDetailView(DetailView):
         return self.object
 
 
-class BlogRecordCreateView(CreateView):
+class BlogRecordCreateView(CreateView, LoginRequiredMixin):
     model = BlogRecord
     fields = ("header", "is_published", "content", "preview")
     success_url = reverse_lazy('catalog:blogrecord_list')
@@ -202,7 +242,7 @@ class BlogRecordCreateView(CreateView):
         return super().form_valid(form)
 
 
-class BlogRecordUpdateView(UpdateView):
+class BlogRecordUpdateView(UpdateView, LoginRequiredMixin):
     model = BlogRecord
     fields = ("header", "is_published", "content", "preview")
     success_url = reverse_lazy('catalog:blogrecord_list')
@@ -226,7 +266,7 @@ class BlogRecordUpdateView(UpdateView):
         return reverse('catalog:blogrecord', args=[self.kwargs.get('pk')])
 
 
-class BlogRecordDeleteView(DeleteView):
+class BlogRecordDeleteView(DeleteView, LoginRequiredMixin):
     model = BlogRecord
     success_url = reverse_lazy('catalog:blogrecord_list')
 

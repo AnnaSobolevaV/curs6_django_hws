@@ -11,7 +11,8 @@
     <div class="col-12">
         <div class="card mb-4 box-shadow">
             <div class="card-header">
-                <h4 class="my-0 font-weight-normal">
+                {% if object.is_published %}
+                <h4 class="text-primary">
                     {% if object.category %}
                     {{ object.category }}
                     {% else %}
@@ -21,14 +22,41 @@
                     {% if object.is_current_vers %}
                     / версия: {{object.is_current_vers}}
                     {% endif %}
-
                 </h4>
+                {% else %}
+                <h4 class="text-primary text-opacity-50">
+                    {% if object.category %}
+                    {{ object.category }}
+                    {% else %}
+                    Без категории
+                    {% endif %}
+                    / {{object.name }}
+                    {% if object.is_current_vers %}
+                    / версия: {{object.is_current_vers}}
+                    {% endif %}
+                </h4>
+                {% endif %}
+
                 <br>
                 {% if user.is_authenticated and user == object.owner %}
                 <a class="btn btn-primary" href="{% url 'catalog:product_update' object.pk %}" role="button">
                     Редактировать </a>
+                {% endif %}
+                {% if user.is_authenticated %}
+                {% if user == object.owner or perms.catalog.delete_product %}
                 <a class="btn btn-primary" href="{% url 'catalog:product_delete' object.pk %}" role="button">
                     Удалить </a>
+                {% endif %}
+                {% if perms.catalog.can_unpublish_product or user == object.owner %}
+                {% if object.is_published %}
+                <a class="btn btn-primary" href="{% url 'catalog:product_unpublish' object.pk %}" role="button">
+                    Отменить публикацию </a>
+                {% endif %}
+                {% if not object.is_published %}
+                <a class="btn btn-primary" href="{% url 'catalog:product_publish' object.pk %}" role="button">
+                    Опубликовать </a>
+                {% endif %}
+                {% endif %}
                 {% endif %}
             </div>
             <div class="card-body">

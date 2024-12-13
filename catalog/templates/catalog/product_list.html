@@ -25,6 +25,7 @@
             <div class="card mb-4 box-shadow">
                 <div class="card-header">
                     {% if user.is_authenticated and user == object.owner %}
+                    {% if object.is_published %}
                     <h4 class="my-0 font-weight-normal">
                         <a class="text-primary" href="/product/{{object.pk}}">
                             {{ object.name }}
@@ -33,6 +34,16 @@
                             {% endif %}
                         </a>
                     </h4>
+                    {% else %}
+                    <h4 class="my-0 font-weight-normal">
+                        <a class="text-primary text-opacity-50" href="/product/{{object.pk}}">
+                            {{ object.name }}
+                            {% if object.is_current_vers %}
+                            / версия: {{object.is_current_vers}}
+                            {% endif %}
+                        </a>
+                    </h4>
+                    {% endif %}
                     {% else %}
                     <h4 class="my-0 font-weight-normal">
                         <a class="text-muted" href="/product/{{object.pk}}">
