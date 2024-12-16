@@ -5,12 +5,17 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
+from django.utils.decorators import method_decorator
 from django.utils.text import slugify
+from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm, VersionProductForm
 from catalog.models import Category, Product, BlogRecord, Contacts, Version
 from unidecode import unidecode
+from django.core.cache import cache
+
+from catalog.services import CategoryService
 
 
 class ContactsCreateView(CreateView):
@@ -27,10 +32,9 @@ class ContactsCreateView(CreateView):
 
 
 def without_category(request):
-    product_list_wo_category = Product.objects.filter(category=None)
-    category_list = Category.objects.all()
-    context = {'product_list_wo_category': product_list_wo_category,
-               'category_list': category_list}
+    context = {}
+    context['product_list_wo_category'] = CategoryService.get_product_list(None, request)
+    context['category_list'] = CategoryService.get_category_list()
     return render(request, 'catalog/category_detail.html', context)
 
 
@@ -39,10 +43,8 @@ class CategoryDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        product_list = Product.objects.filter(category=self.object.id)
-        context['product_list'] = product_list
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['product_list'] = CategoryService.get_product_list(self.object, self.request)
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
 
@@ -74,12 +76,14 @@ class ProductListView(ListView):
         for product in context_data['object_list']:
             is_current_vers = Version.objects.filter(product=product, is_current_vers=True).first()
             product.is_current_vers = is_current_vers
-        category_list = Category.objects.all()
-        context_data['category_list'] = category_list
+        context_data['category_list'] = CategoryService.get_category_list()
         return context_data
 
     def get_queryset(self, *args, **kwargs):
-        queryset = super().get_queryset(*args, **kwargs)
+        queryset = cache.get('product_list_queryset')
+        if not queryset:
+            queryset = super().get_queryset()
+            cache.set('product_list_queryset', queryset, 60 * 15)  # Кешируем данные на 15 минут
         user = self.request.user
         if not user.is_authenticated:
             queryset = queryset.filter(is_published=True)
@@ -88,6 +92,7 @@ class ProductListView(ListView):
         return queryset
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ProductDetailView(DetailView):
     model = Product
 
@@ -96,8 +101,7 @@ class ProductDetailView(DetailView):
         product = context_data['object']
         is_current_vers = Version.objects.filter(product=product, is_current_vers=True).first()
         product.is_current_vers = is_current_vers
-        category_list = Category.objects.all()
-        context_data['category_list'] = category_list
+        context_data['category_list'] = CategoryService.get_category_list()
         return context_data
 
 
@@ -115,8 +119,7 @@ class ProductCreateView(CreateView, LoginRequiredMixin):
         else:
             formset = version_formset(instance=self.object)
             context['formset'] = formset
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
     def form_valid(self, form):
@@ -153,9 +156,14 @@ class ProductUpdateView(UpdateView, LoginRequiredMixin):
         else:
             formset = version_formset(instance=self.object)
             context['formset'] = formset
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
+
+    # def get_success_url(self):
+    #     self.object = self.get_object()
+    #     success_url = redirect('catalog:product', pk=self.object.pk)
+    #     #url = super().get_success_url()
+    #     return success_url
 
     def form_valid(self, form):
         context_data = self.get_context_data()
@@ -181,8 +189,7 @@ class ProductDeleteView(DeleteView, LoginRequiredMixin):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
 
@@ -191,8 +198,7 @@ class BlogRecordListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
     def get_queryset(self, *args, **kwargs):
@@ -208,8 +214,7 @@ class BlogRecordDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
     def get_object(self, queryset=None):
@@ -226,8 +231,7 @@ class BlogRecordCreateView(CreateView, LoginRequiredMixin):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
     def form_valid(self, form):
@@ -249,8 +253,7 @@ class BlogRecordUpdateView(UpdateView, LoginRequiredMixin):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
 
     def form_valid(self, form):
@@ -272,6 +275,5 @@ class BlogRecordDeleteView(DeleteView, LoginRequiredMixin):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        category_list = Category.objects.all()
-        context['category_list'] = category_list
+        context['category_list'] = CategoryService.get_category_list()
         return context
